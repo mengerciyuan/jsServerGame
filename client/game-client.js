@@ -29,11 +29,34 @@ gameClient.on('data', (data) => {
     rl.prompt();
 });
 
+/**
+ * 主动断开连接的核心方法（优雅退出）
+ */
+function activeDisconnect() {
+    console.log('【正在退出】正在优雅断开与游戏服务器的连接...');
+    
+    // 1. 优雅关闭TCP连接（优先使用 end()，确保数据发送完成）
+    gameClient.end(); // 优雅断开：发送FIN包，等待服务器响应后关闭
+    
+    // 若需要强制断开（不推荐常规场景），可使用：
+    // gameClient.destroy(); // 立即关闭，丢弃未发送数据
+    
+    // 2. 关闭命令行交互接口，清理资源
+    rl.close();
+}
+
 // 2. 处理命令行输入（发送消息到服务器）
 rl.on('line', (input) => {
-    const msg = input.trim();
+     const msg = input.trim();
+    
+    // 匹配退出命令（新增「退出连接」中文指令，保留原有英文指令兼容）
+    if (msg === '退出连接' || msg === 'exit' || msg === 'quit') {
+        activeDisconnect();
+        return;
+    }
+    
+    // 非退出命令，发送消息到服务器
     if (msg) {
-        // 发送消息到服务器
         gameClient.write(msg);
     }
     rl.prompt();
