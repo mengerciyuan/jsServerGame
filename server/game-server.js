@@ -8,6 +8,47 @@ const SERVER_HOST = '127.0.0.1';
 // 存储所有已连接的玩家客户端（key: socket对象, value: 玩家昵称）
 const connectedPlayers = new Map();
 
+// 在文件顶部添加 readline 模块
+const readline = require('readline');
+
+// 在服务器启动后添加控制台输入监听
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+rl.on('line', (input) => {
+    if (input.trim() === 'players' || input.trim() === 'list') {
+        showOnlinePlayers();
+    } else if (input.trim() === 'help') {
+        console.log('可用命令:');
+        console.log('- players 或 list: 查看在线玩家');
+        console.log('- help: 显示帮助信息');
+        console.log('- exit: 关闭服务器');
+    } else if (input.trim() === 'exit') {
+        console.log('正在关闭服务器...');
+        gameServer.close(() => {
+            console.log('服务器已关闭');
+            process.exit(0);
+        });
+    }
+});
+
+// 添加显示在线玩家的函数
+function showOnlinePlayers() {
+    console.log('=== 当前在线玩家列表 ===');
+    if (connectedPlayers.size === 0) {
+        console.log('当前没有玩家在线');
+    } else {
+        let count = 0;
+        connectedPlayers.forEach((nickname, socket) => {
+            console.log(`${++count}. ${nickname}`);
+        });
+        console.log(`总计: ${connectedPlayers.size} 名玩家在线`);
+    }
+    console.log('========================');
+}
+
 // 创建TCP Socket服务器
 const gameServer = net.createServer((clientSocket) => {
     console.log('【新连接】有玩家尝试进入游戏...');
